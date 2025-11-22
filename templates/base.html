@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}王的小说站{% endblock %}</title>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='css/style.css') }}"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <!-- 导航栏 -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <a href="{{ url_for('index') }}" class="logo-link">
+                        <span class="logo-text">王的小说站</span>
+                    </a>
+                </div>
+                <div class="nav-menu">
+                    <a href="{{ url_for('index') }}" class="nav-link">首页</a>
+                    {% if session.user_id %}
+                    <a href="{{ url_for('author_dashboard') }}" class="nav-link"
+                        >作家后台</a
+                    >
+                    {% if session.role in ['admin', 'super_admin'] %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="nav-link"
+                        >管理后台</a
+                    >
+                    {% endif %}
+                    <div class="user-menu">
+                        <span class="username">{{ session.username }}</span>
+                        <div class="dropdown-menu">
+                            <a
+                                href="{{ url_for('logout') }}"
+                                class="dropdown-link"
+                                >退出</a
+                            >
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link">登录</a>
+                    <a href="{{ url_for('register') }}" class="nav-link"
+                        >注册</a
+                    >
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+
+        <!-- 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %}
+        <div class="messages-container">
+            {% for category, message in messages %}
+            <div class="message message-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %} {% endwith %}
+
+        <!-- 主要内容 -->
+        <main class="main-content">{% block content %}{% endblock %}</main>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>2025 王的小说站. 让阅读成为一种享受.</p>
+            </div>
+        </footer>
+
+        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    </body>
+</html>

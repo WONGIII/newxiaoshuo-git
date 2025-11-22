@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}用户设置 - 王的小说站{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="settings-header">
+        <h1>用户</h1>设置</h1>
+        <a href="{{ url_for('author_dashboard') }}" class="btn btn-secondary">返回后台</a>
+    </div>
+
+    <div class="settings-content">
+        <!-- 个人信息设置 -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h2>个人信息</h2></h2>
+                <p class="settings-description">
+                    管理您的个人资料和账户信息
+                </p>
+            </div>
+
+            <form method="POST" class="settings-form">
+                <div class="form-group">
+                    <label for="nickname">昵称</label>
+                    <input
+                        type="text"
+                        id="nickname"
+                        name="nickname"
+                        value="{{ user_settings.nickname or user.username }}"
+                        placeholder="输入您的昵称"
+                        class="form-control"
+                    >
+                    <small class="form-text">
+                        这将是您在网站上显示的名称
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input
+                        type="text"
+                        id="username"
+                        value="{{ user.username }}"
+                        class="form-control"
+                        disabled
+                    >
+                    <small class="form-text">
+                        用户名不可更改
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input
+                        type="email"
+                        id="email"
+                        value="{{ user.email }}"
+                        class="form-control"
+                        disabled
+                    >
+                    <small class="form-text">
+                        邮箱不可更改
+                    </small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">保存个人信息</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 密码修改 -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h2>修改</h2>密码</h2>
+                <p class="settings-description">
+                    定期更新密码以保护账户安全
+                </p>
+            </div>
+
+            <form method="POST" class="settings-form">
+                <div class="form-group">
+                    <label for="current_password">当前密码</label>
+                    <input
+                        type="password"
+                        id="current_password"
+                        name="current_password"
+                        placeholder="输入当前密码"
+                        class="form-control"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password">新密码</label>
+                    <input
+                        type="password"
+                        id="new_password"
+                        name="new_password"
+                        placeholder="输入新密码"
+                        class="form-control"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">确认新密码</label>
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        placeholder="再次输入新密码"
+                        class="form-control"
+                    >
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">更新密码</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- AI助手设置 -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h2></h2>AI助手设置</h2>
+                <p class="settings-description">
+                    配置OpenAI兼容的API来使用AI写作助手功能
+                </p>
+            </div>
+
+            <form method="POST" class="settings-form">
+                <div class="form-group">
+                    <label for="openai_api_key">API Key</label>
+                    <input
+                        type="password"
+                        id="openai_api_key"
+                        name="openai_api_key"
+                        value="{{ user_settings.openai_api_key or '' }}"
+                        placeholder="输入你的API Key"
+                        class="form-control"
+                    >
+                    <small class="form-text">
+                        你的API Key将安全存储在本地，不会与他人共享
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="openai_base_url">API Base URL</label>
+                    <input
+                        type="url"
+                        id="openai_base_url"
+                        name="openai_base_url"
+                        value="{{ user_settings.openai_base_url or '' }}"
+                        placeholder="例如: https://api.deepseek.com"
+                        class="form-control"
+                    >
+                    <small class="form-text">
+                        留空则使用默认的OpenAI API地址
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="openai_model">模型名称</label>
+                    <input
+                        type="text"
+                        id="openai_model"
+                        name="openai_model"
+                        value="{{ user_settings.openai_model or '' }}"
+                        placeholder="例如: deepseek-chat, gpt-3.5-turbo"
+                        class="form-control"
+                    >
+                    <small class="form-text">
+                        指定要使用的模型名称
+                    </small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">保存AI设置</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <h2></h2>使用说明</h2>
+            </div>
+            <div class="instructions">
+                <h3></h3>支持的API提供商</h3>
+                <ul></ul>
+                    <li><strong>Deep</strong>Seek</strong> - 推荐使用，性价比高</li>
+                    <li><strong>Open</strong>AI</strong> - 官方API</li>
+                    <li><strong>其他</strong>兼容OpenAI格式的API</strong></li>
+                </ul>
+
+                <h3></h3>DeepSeek配置示例</h3>
+                <div class="config-example">
+                    <p><strong></strong>API Key:</strong> 从DeepSeek平台获取</p>
+                    <p><strong>Base</strong> URL:</strong> https://api.deepseek.com</p>
+                    <p><strong>模型</strong>名称:</strong> deepseek-chat</p>
+                </div>
+
+                <h3></h3>功能特性</h3>
+                <ul></ul>
+                    <li></li>在草稿编辑器中实时调用AI助手</li>
+                    <li></li>支持润色文字、续写故事、生成对话等</li>
+                    <li>自动</li>保存草稿，不会丢失内容</li>
+                    <li></li>优雅的毛玻璃设计界面</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

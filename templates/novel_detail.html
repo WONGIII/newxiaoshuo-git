@@ -1,0 +1,604 @@
+{% extends "base.html" %} {% block title %}{{ novel.title }} - 优雅小说{%
+endblock %} {% block content %}
+<div class="novel-detail-container">
+    <div class="novel-header">
+        <div class="novel-cover-section">
+            {% if novel.cover_image %}
+            <div class="novel-cover-large-container">
+                <img
+                    src="{{ novel.cover_image }}"
+                    alt="{{ novel.title }}"
+                    class="novel-cover-large"
+                />
+            </div>
+            {% else %}
+            <div class="novel-cover-large-container">
+                <div class="cover-placeholder-large">
+                    <span class="placeholder-text-large"
+                        >{{ novel.title[:2] }}</span
+                    >
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="novel-info-section">
+            <h1 class="novel-title-large">{{ novel.title }}</h1>
+            <p class="novel-author">作者：{{ novel.author.username }}</p>
+
+            <div class="novel-status-badge status-{{ novel.status }}">
+                {% if novel.status == 'ongoing' %}连载中{% else %}已完结{% endif
+                %}
+            </div>
+
+            <div class="novel-meta">
+                <span class="meta-item"
+                    >创建时间：{{ novel.created_at.strftime('%Y-%m-%d') }}</span
+                >
+                <span class="meta-item"
+                    >最后更新：{{ novel.updated_at.strftime('%Y-%m-%d') }}</span
+                >
+            </div>
+
+            {% if novel.description %}
+            <div class="novel-description-section">
+                <h3>作品简介</h3>
+                <p class="novel-description-full">{{ novel.description }}</p>
+            </div>
+            {% endif %} {% if session.user_id == novel.author_id or session.role
+            in ['admin', 'super_admin'] %}
+            <div class="author-actions">
+                <a
+                    href="{{ url_for('create_chapter', novel_id=novel.id) }}"
+                    class="btn btn-primary"
+                    >发布新章节</a
+                >
+                <a
+                    href="{{ url_for('edit_novel', novel_id=novel.id) }}"
+                    class="btn btn-outline-dark"
+                    >编辑小说</a
+                >
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="novel-content">
+        <div class="chapters-section">
+            <div class="section-header">
+                <h2>章节列表</h2>
+                <span class="chapter-count">{{ chapters|length }} 章</span>
+            </div>
+
+            {% if chapters %}
+            <div class="chapters-list">
+                {% for chapter in chapters %}
+                <div class="chapter-item">
+                    <div class="chapter-item-content">
+                        <a
+                            href="{{ url_for('read_chapter', novel_id=novel.id, chapter_number=chapter.chapter_number) }}"
+                            class="chapter-link"
+                        >
+                            <span class="chapter-number"
+                                >第{{ chapter.chapter_number }}章</span
+                            >
+                            <span class="chapter-title"
+                                >{{ chapter.title }}</span
+                            >
+                            <span class="chapter-date"
+                                >{{ chapter.created_at.strftime('%m-%d')
+                                }}</span
+                            >
+                        </a>
+                        {% if session.user_id == novel.author_id or session.role
+                        in ['admin', 'super_admin'] %}
+                        <div class="chapter-actions">
+                            <a
+                                href="{{ url_for('edit_chapter', chapter_id=chapter.id) }}"
+                                class="btn btn-sm btn-outline-dark"
+                                >编辑</a
+                            >
+                            <form
+                                method="POST"
+                                action="{{ url_for('delete_chapter', chapter_id=chapter.id) }}"
+                                style="display: inline"
+                                onsubmit="return confirm('确定要删除这个章节吗？此操作不可恢复！');"
+                            >
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-danger text-white"
+                                >
+                                    删除
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-chapters">
+                <div class="empty-icon">📝</div>
+                <h3>暂无章节</h3>
+                <p>作者还没有发布任何章节</p>
+                {% if session.user_id == novel.author_id %}
+                <a
+                    href="{{ url_for('create_chapter', novel_id=novel.id) }}"
+                    class="btn btn-primary"
+                    >发布第一章</a
+                >
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="comments-section">
+            <div class="section-header">
+                <h2>读者评论</h2>
+            </div>
+
+            {% if session.user_id %}
+            <div class="comment-form-section">
+                <form
+                    method="POST"
+                    action="{{ url_for('add_comment', novel_id=novel.id) }}"
+                    class="comment-form"
+                >
+                    <textarea
+                        name="content"
+                        placeholder="写下你的评论..."
+                        class="comment-input"
+                        required
+                    ></textarea>
+                    <button type="submit" class="btn btn-primary">
+                        发表评论
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="comment-login-prompt">
+                <p>请<a href="{{ url_for('login') }}">登录</a>后发表评论</p>
+            </div>
+            {% endif %} {% if comments %}
+            <div class="comments-list">
+                {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-author"
+                            >{{ comment.user.username }}</span
+                        >
+                        <span class="comment-date"
+                            >{{ comment.created_at.strftime('%Y-%m-%d %H:%M')
+                            }}</span
+                        >
+                    </div>
+                    <div class="comment-content">{{ comment.content }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-comments">
+                <div class="empty-icon">💬</div>
+                <h3>暂无评论</h3>
+                <p>成为第一个评论的人吧！</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .novel-detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .novel-header {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 3rem;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .novel-cover-section {
+        flex-shrink: 0;
+    }
+
+    .novel-cover-large-container {
+        width: 200px;
+        height: 280px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+    }
+
+    .novel-cover-large {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .cover-placeholder-large {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .novel-info-section {
+        flex: 1;
+    }
+
+    .novel-title-large {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-family: "Noto Serif SC", serif;
+    }
+
+    .novel-author {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 1rem;
+    }
+
+    .novel-status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+
+    .status-ongoing {
+        background: rgba(39, 174, 96, 0.1);
+        color: #27ae60;
+        border: 1px solid rgba(39, 174, 96, 0.2);
+    }
+
+    .status-completed {
+        background: rgba(149, 165, 166, 0.1);
+        color: #95a5a6;
+        border: 1px solid rgba(149, 165, 166, 0.2);
+    }
+
+    .novel-meta {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: #999;
+    }
+
+    .meta-item {
+        white-space: nowrap;
+    }
+
+    .novel-description-section {
+        margin-bottom: 2rem;
+    }
+
+    .novel-description-section h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .novel-description-full {
+        color: #666;
+        line-height: 1.6;
+        font-size: 1rem;
+    }
+
+    .author-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .novel-content {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+    }
+
+    .chapters-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .section-header h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+
+    .chapter-count {
+        font-size: 0.9rem;
+        color: #666;
+        background: #f8f9fa;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+    }
+
+    .chapters-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .chapter-item {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .chapter-item:hover {
+        background: #f8f9fa;
+    }
+
+    .chapter-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: 1rem;
+        flex-shrink: 0;
+    }
+
+    .chapter-item-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .chapter-link {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
+        gap: 1rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chapter-title {
+        flex: 1;
+        font-weight: 500;
+        color: #333;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chapter-number {
+        font-size: 0.9rem;
+        color: #666;
+        min-width: 80px;
+    }
+
+    .chapter-title {
+        flex: 1;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .chapter-date {
+        font-size: 0.8rem;
+        color: #999;
+    }
+
+    .empty-chapters {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #666;
+    }
+
+    .empty-chapters .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-chapters h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    .comments-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .comment-form-section {
+        margin-bottom: 2rem;
+    }
+
+    .comment-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .comment-input {
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1rem;
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+        line-height: 1.5;
+    }
+
+    .comment-input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .comment-login-prompt {
+        text-align: center;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .comment-login-prompt a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .comment-login-prompt a:hover {
+        text-decoration: underline;
+    }
+
+    .comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .comment-item {
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .comment-author {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .comment-date {
+        font-size: 0.8rem;
+        color: #999;
+    }
+
+    .comment-content {
+        color: #666;
+        line-height: 1.5;
+    }
+
+    .empty-comments {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #666;
+    }
+
+    .empty-comments .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-comments h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    @media (max-width: 768px) {
+        .novel-detail-container {
+            padding: 1rem;
+        }
+
+        .novel-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1.5rem;
+        }
+
+        .novel-cover-large-container {
+            width: 150px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .novel-title-large {
+            font-size: 2rem;
+        }
+
+        .novel-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .novel-content {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .author-actions {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .section-header {
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: center;
+        }
+
+        .chapter-item-content {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        .chapter-link {
+            flex-direction: row;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .chapter-actions {
+            margin-left: 0;
+            justify-content: center;
+        }
+
+        .chapter-number {
+            min-width: auto;
+        }
+    }
+</style>
+{% endblock %}

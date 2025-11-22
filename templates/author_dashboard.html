@@ -1,0 +1,476 @@
+{% extends "base.html" %} {% block title %}作家后台 - 优雅小说{% endblock %} {%
+block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">作家后台</h1>
+        <p class="dashboard-subtitle">管理您的作品和创作</p>
+        <a href="{{ url_for('create_novel') }}" class="btn btn-primary"
+            >创建新小说</a
+        >
+        <a href="{{ url_for('user_settings') }}" class="btn btn-secondary"
+            >AI设置</a
+        >
+    </div>
+
+    {% if novels %}
+    <div class="novels-dashboard">
+        <h2 class="section-title">我的作品</h2>
+        <div class="dashboard-grid">
+            {% for novel in novels %}
+            <div class="dashboard-novel-card">
+                <div class="novel-cover-dashboard">
+                    {% if novel.cover_image %}
+                    <img
+                        src="{{ novel.cover_image }}"
+                        alt="{{ novel.title }}"
+                        class="cover-image-dashboard"
+                    />
+                    {% else %}
+                    <div class="cover-placeholder-dashboard">
+                        <span class="placeholder-text"
+                            >{{ novel.title[:2] }}</span
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="novel-info-dashboard">
+                    <h3 class="novel-title-dashboard">
+                        <a
+                            href="{{ url_for('novel_detail', novel_id=novel.id) }}"
+                            >{{ novel.title }}</a
+                        >
+                    </h3>
+
+                    <div class="novel-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">章节数</span>
+                            <span class="stat-value"
+                                >{{ novel.chapters|length }}</span
+                            >
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">评论数</span>
+                            <span class="stat-value"
+                                >{{ novel.comments|length }}</span
+                            >
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">状态</span>
+                            <span class="stat-value status-{{ novel.status }}">
+                                {% if novel.status == 'ongoing' %}连载中{% else
+                                %}已完结{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="novel-meta-dashboard">
+                        <span class="meta-item"
+                            >创建：{{ novel.created_at.strftime('%Y-%m-%d')
+                            }}</span
+                        >
+                        <span class="meta-item"
+                            >更新：{{ novel.updated_at.strftime('%Y-%m-%d')
+                            }}</span
+                        >
+                    </div>
+
+                    <div class="novel-actions">
+                        <a
+                            href="{{ url_for('create_chapter', novel_id=novel.id) }}"
+                            class="btn btn-sm btn-primary"
+                            >发布章节</a
+                        >
+                        <a
+                            href="{{ url_for('novel_drafts', novel_id=novel.id) }}"
+                            class="btn btn-sm btn-info"
+                            >草稿笔记</a
+                        >
+                        <a
+                            href="{{ url_for('edit_novel', novel_id=novel.id) }}"
+                            class="btn btn-sm btn-outline-dark"
+                            >编辑信息</a
+                        >
+                        <a
+                            href="{{ url_for('novel_detail', novel_id=novel.id) }}"
+                            class="btn btn-sm btn-secondary"
+                            >查看详情</a
+                        >
+                        {% if novel.chapters %}
+                        <a
+                            href="{{ url_for('novel_detail', novel_id=novel.id) }}#chapters"
+                            class="btn btn-sm btn-outline-dark"
+                            >管理章节</a
+                        >
+                        {% endif %}
+                        <form
+                            method="POST"
+                            action="{{ url_for('delete_novel', novel_id=novel.id) }}"
+                            style="display: inline"
+                            onsubmit="return confirm('确定要删除这本小说吗？此操作不可恢复！');"
+                        >
+                            <button
+                                type="submit"
+                                class="btn btn-sm btn-danger text-white"
+                            >
+                                删除
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-dashboard">
+        <div class="empty-icon">📝</div>
+        <h3>还没有作品</h3>
+        <p>开始您的创作之旅，创建第一本小说吧！</p>
+        <a href="{{ url_for('create_novel') }}" class="btn btn-primary"
+            >创建第一本小说</a
+        >
+    </div>
+    {% endif %} {% if novels %}
+    <div class="quick-stats">
+        <h2 class="section-title">创作统计</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-content">
+                    <span class="stat-number">{{ novels|length }}</span>
+                    <span class="stat-label">作品数量</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📖</div>
+                <div class="stat-content">
+                    <span class="stat-number">{{ total_chapters }}</span>
+                    <span class="stat-label">总章节数</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💬</div>
+                <div class="stat-content">
+                    <span class="stat-number">{{ total_comments }}</span>
+                    <span class="stat-label">总评论数</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-content">
+                    <span class="stat-number">{{ ongoing_novels }}</span>
+                    <span class="stat-label">连载中作品</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-title {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-family: "Noto Serif SC", serif;
+    }
+
+    .dashboard-subtitle {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 1.5rem;
+    }
+
+    .novels-dashboard {
+        margin-bottom: 3rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .dashboard-novel-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        display: flex;
+    }
+
+    .dashboard-novel-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .novel-cover-dashboard {
+        width: 100px;
+        min-width: 100px;
+        height: 0;
+        padding-bottom: 133.33%;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cover-image-dashboard {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .cover-placeholder-dashboard {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+
+    .placeholder-text {
+        font-size: 1.5rem;
+    }
+
+    .novel-info-dashboard {
+        flex: 1;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .novel-title-dashboard {
+        margin: 0 0 1rem 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .novel-title-dashboard a {
+        color: #333;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .novel-title-dashboard a:hover {
+        color: #007bff;
+    }
+
+    .novel-stats {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: #666;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .status-ongoing {
+        color: #28a745;
+    }
+
+    .status-completed {
+        color: #6c757d;
+    }
+
+    .novel-meta-dashboard {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.8rem;
+        color: #999;
+    }
+
+    .meta-item {
+        white-space: nowrap;
+    }
+
+    .novel-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        border: none;
+    }
+
+    .btn-info:hover {
+        background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .empty-dashboard {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-dashboard h3 {
+        font-size: 1.5rem;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-dashboard p {
+        color: #666;
+        margin-bottom: 2rem;
+    }
+
+    .quick-stats {
+        margin-top: 3rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #333;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-novel-card {
+            flex-direction: column;
+        }
+
+        .novel-cover-dashboard {
+            width: 100%;
+            height: 0;
+            padding-bottom: 133.33%;
+        }
+
+        .novel-stats {
+            justify-content: space-between;
+        }
+
+        .novel-meta-dashboard {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}

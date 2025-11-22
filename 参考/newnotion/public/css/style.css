@@ -1,0 +1,353 @@
+/* --- Global Styles & Variables --- */
+:root {
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --bg-color: #f8f9fa; /* A very light, clean gray */
+    --sidebar-bg: rgba(255, 255, 255, 0.6); /* Semi-transparent white for the glass effect */
+    --editor-bg: #ffffff;
+    --text-color: #1a1a1a; /* Dark, but not pure black */
+    --text-light-color: #868e96; /* For placeholders and secondary text */
+    --accent-color: #4c6ef5; /* A nice, calm blue */
+    --accent-color-hover: #3b5bdb;
+    --border-color: rgba(0, 0, 0, 0.07);
+    --danger-color: #fa5252;
+    --border-radius: 8px;
+    --transition-speed: 0.2s;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Main Layout --- */
+.app-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: width var(--transition-speed) ease;
+}
+
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--editor-bg);
+}
+
+/* --- Sidebar --- */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.new-note-button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 24px;
+    line-height: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.new-note-button:hover {
+    background-color: var(--accent-color-hover);
+}
+
+.notes-list-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.note-item {
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color var(--transition-speed) ease;
+    margin-bottom: 4px;
+}
+
+.note-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.note-item.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.note-item.active .note-item-title {
+    color: white;
+}
+.note-item.active .note-item-date {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.note-item-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.note-item-date {
+    font-size: 0.75rem;
+    color: var(--text-light-color);
+}
+
+
+.sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.settings-button {
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    text-align: left;
+    transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+}
+
+.settings-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+
+/* --- Editor & Main Content --- */
+#editor-view {
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    height: 100%;
+    padding: 24px 48px;
+}
+
+#note-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    border: none;
+    outline: none;
+    padding: 16px 0;
+    width: 100%;
+    background: transparent;
+}
+
+#note-title::placeholder {
+    color: var(--text-light-color);
+    opacity: 0.5;
+}
+
+#note-content {
+    flex-grow: 1;
+    font-size: 1rem;
+    line-height: 1.7;
+    border: none;
+    outline: none;
+    resize: none;
+    width: 100%;
+    background: transparent;
+    padding-top: 16px;
+}
+
+#note-content::placeholder {
+    color: var(--text-light-color);
+    opacity: 0.7;
+}
+
+.welcome-view {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+    color: var(--text-light-color);
+}
+
+.welcome-view h1 {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+
+/* --- Modal --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--bg-color);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    border: 1px solid var(--border-color);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-light-color);
+    transition: color var(--transition-speed) ease;
+}
+
+.close-button:hover {
+    color: var(--text-color);
+}
+
+.modal-body .form-group {
+    margin-bottom: 16px;
+}
+
+.modal-body label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.modal-body input[type="text"],
+.modal-body input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.modal-body input[type="text"]:focus,
+.modal-body input[type="password"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.2);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.button-primary {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.button-primary:hover {
+    background-color: var(--accent-color-hover);
+}
+
+/* --- Scrollbar Styling --- */
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* --- AI Assist Button --- */
+.ai-assist-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--sidebar-bg);
+    backdrop-filter: blur(5px);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ai-assist-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}

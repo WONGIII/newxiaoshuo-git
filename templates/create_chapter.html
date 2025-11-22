@@ -1,0 +1,198 @@
+{% extends "base.html" %} {% block title %}发布章节 - {{ novel.title }} -
+优雅小说{% endblock %} {% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">发布新章节</h1>
+            <p class="form-subtitle">为《{{ novel.title }}》添加新内容</p>
+        </div>
+
+        <form method="POST" class="form">
+            <div class="form-group">
+                <label for="title" class="form-label">章节标题</label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    class="form-input"
+                    required
+                    placeholder="请输入章节标题"
+                    maxlength="200"
+                />
+                <p class="form-hint">
+                    简洁明了的标题能帮助读者快速了解本章内容
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="content" class="form-label">章节内容</label>
+                <textarea
+                    id="content"
+                    name="content"
+                    class="form-textarea content-editor"
+                    placeholder="请在此输入章节内容..."
+                    rows="20"
+                    required
+                ></textarea>
+                <p class="form-hint">建议每段开头空两格，段落之间用空行分隔</p>
+            </div>
+
+            <div class="form-group">
+                <label for="author_note" class="form-label"
+                    >作者说（可选）</label
+                >
+                <textarea
+                    id="author_note"
+                    name="author_note"
+                    class="form-textarea"
+                    placeholder="可以在这里写下创作感想、更新说明或与读者互动..."
+                    rows="4"
+                    maxlength="500"
+                ></textarea>
+                <p class="form-hint">
+                    这部分内容会显示在章节末尾，与读者分享您的想法
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <a
+                    href="{{ url_for('novel_detail', novel_id=novel.id) }}"
+                    class="btn btn-outline-dark"
+                    >取消</a
+                >
+                <button type="submit" class="btn btn-primary">发布章节</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .form-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+    }
+
+    .form-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-family: "Noto Serif SC", serif;
+    }
+
+    .form-subtitle {
+        color: #666;
+        font-size: 1rem;
+    }
+
+    .form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-input {
+        padding: 0.75rem 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .form-textarea {
+        padding: 0.75rem 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.6;
+    }
+
+    .content-editor {
+        font-family: "Noto Serif SC", serif;
+        font-size: 1.1rem;
+        line-height: 1.8;
+    }
+
+    .form-textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .form-hint {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-full {
+        width: 100%;
+    }
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 1rem;
+        }
+
+        .form-card {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

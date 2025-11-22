@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewNotion - A Fresh Space for Your Thoughts</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar for notes list -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Notes</h2>
+                <button id="new-note-btn" class="new-note-button" title="Create a new note">+</button>
+            </div>
+            <div id="notes-list" class="notes-list-container">
+                <!-- Notes will be dynamically inserted here -->
+            </div>
+             <div class="sidebar-footer">
+                <button id="settings-btn" class="settings-button">Settings</button>
+            </div>
+        </aside>
+
+        <!-- Main content area for the editor -->
+        <main class="main-content">
+            <div id="editor-view">
+                <input type="text" id="note-title" placeholder="Your magnificent title...">
+                <textarea id="note-content" placeholder="Start writing your story here..."></textarea>
+                 <button id="ai-assist-btn" class="ai-assist-button" title="AI Assistant">✨</button>
+            </div>
+            <div id="welcome-view" class="welcome-view">
+                <h1>Welcome to NewNotion</h1>
+                <p>Select a note from the list to start editing, or create a new one.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>AI Settings</h2>
+                <button id="close-modal-btn" class="close-button">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="api-url">API URL</label>
+                    <input type="text" id="api-url" placeholder="e.g., https://api.openai.com/v1">
+                </div>
+                <div class="form-group">
+                    <label for="api-key">API Key</label>
+                    <input type="password" id="api-key" placeholder="Enter your API key">
+                </div>
+                <div class="form-group">
+                    <label for="model-name">Model Name</label>
+                    <input type="text" id="model-name" placeholder="e.g., gpt-4-turbo">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-settings-btn" class="button-primary">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+{% extends "base.html" %} {% block title %}编辑章节 - {{ chapter.title }} -
+优雅小说{% endblock %} {% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">编辑章节</h1>
+            <p class="form-subtitle">
+                修改《{{ novel.title }}》的第{{ chapter.chapter_number }}章
+            </p>
+        </div>
+
+        <form method="POST" class="form">
+            <div class="form-group">
+                <label for="title" class="form-label">章节标题</label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    class="form-input"
+                    required
+                    value="{{ chapter.title }}"
+                    maxlength="200"
+                />
+                <p class="form-hint">
+                    简洁明了的标题能帮助读者快速了解本章内容
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="content" class="form-label">章节内容</label>
+                <textarea
+                    id="content"
+                    name="content"
+                    class="form-textarea content-editor"
+                    placeholder="请在此输入章节内容..."
+                    rows="20"
+                    required
+                >
+{{ chapter.content }}</textarea
+                >
+                <p class="form-hint">建议每段开头空两格，段落之间用空行分隔</p>
+            </div>
+
+            <div class="form-group">
+                <label for="author_note" class="form-label"
+                    >作者说（可选）</label
+                >
+                <textarea
+                    id="author_note"
+                    name="author_note"
+                    class="form-textarea"
+                    placeholder="可以在这里写下创作感想、更新说明或与读者互动..."
+                    rows="4"
+                    maxlength="500"
+                >
+{{ chapter.author_note or '' }}</textarea
+                >
+                <p class="form-hint">
+                    这部分内容会显示在章节末尾，与读者分享您的想法
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <a
+                    href="{{ url_for('novel_detail', novel_id=novel.id) }}"
+                    class="btn btn-outline-dark"
+                >
+                    取消
+                </a>
+                <button type="submit" class="btn btn-primary">保存修改</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

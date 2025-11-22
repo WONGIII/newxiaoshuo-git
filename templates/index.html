@@ -1,0 +1,99 @@
+{% extends "base.html" %} {% block title %}首页 - 王的小说站{% endblock %} {%
+block content %}
+<div class="hero-section">
+    <div class="hero-background"></div>
+    <div class="hero-content">
+        <h1 class="hero-title">王的小说站</h1>
+        <p class="hero-subtitle">在文字的世界里，寻找心灵的栖息地</p>
+        {% if not session.user_id %}
+        <div class="hero-actions">
+            <a href="{{ url_for('register') }}" class="btn btn-primary"
+                >开始创作</a
+            >
+            <a href="{{ url_for('login') }}" class="btn btn-outline-dark"
+                >立即阅读</a
+            >
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container">
+    <section class="featured-section">
+        <div class="section-header">
+            <h2 class="section-title">最新作品</h2>
+            <p class="section-subtitle">发现优秀的原创小说</p>
+        </div>
+
+        {% if novels %}
+        <div class="novels-grid">
+            {% for novel in novels %}
+            <div class="novel-card">
+                <div class="novel-cover-vertical">
+                    {% if novel.cover_image %}
+                    <img
+                        src="{{ novel.cover_image }}"
+                        alt="{{ novel.title }}"
+                        class="cover-image-vertical"
+                    />
+                    {% else %}
+                    <div class="cover-placeholder-vertical">
+                        <span class="placeholder-text"
+                            >{{ novel.title[:2] }}</span
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="novel-info-vertical">
+                    <h3 class="novel-title">
+                        <a
+                            href="{{ url_for('novel_detail', novel_id=novel.id) }}"
+                            >{{ novel.title }}</a
+                        >
+                    </h3>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📚</div>
+            <h3>暂无作品</h3>
+            <p>还没有人发布小说，成为第一个创作者吧！</p>
+            {% if session.user_id %}
+            <a href="{{ url_for('create_novel') }}" class="btn btn-primary"
+                >创建我的小说</a
+            >
+            {% else %}
+            <a href="{{ url_for('register') }}" class="btn btn-primary"
+                >注册成为作家</a
+            >
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="features-section">
+        <div class="section-header">
+            <h2 class="section-title">为什么选择我们</h2>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3>优雅设计</h3>
+                <p>精心设计的界面，让阅读和创作都成为一种享受</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h3>便捷创作</h3>
+                <p>强大的作家后台，轻松管理你的作品和章节</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3>互动社区</h3>
+                <p>与读者互动，收获宝贵的反馈和建议</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

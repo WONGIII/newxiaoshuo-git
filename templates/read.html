@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}{{ chapter.title }} - {{ novel.title }} - 优雅小说{% endblock %}
+
+{% block content %}
+<div class="reading-container">
+    <div class="reading-header">
+        <div class="reading-nav">
+            <a href="{{ url_for('novel_detail', novel_id=novel.id) }}" class="nav-link">
+                <span class="nav-icon">←</span>
+                返回小说主页
+            </a>
+        </div>
+
+        <div class="reading-title-section">
+            <h1 class="novel-title-reading">{{ novel.title }}</h1>
+            <h2 class="chapter-title-reading">{{ chapter.title }}</h2>
+            <div class="reading-meta">
+                <span class="author-name">作者：{{ novel.author.username }}</span>
+                <span class="chapter-number">第{{ chapter.chapter_number }}章</span>
+                <span class="update-time">{{ chapter.created_at.strftime('%Y年%m月%d日') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="reading-content">
+        <div class="chapter-content">
+            {{ chapter.content|replace('\n', '<br>')|safe }}
+        </div>
+
+        {% if chapter.author_note %}
+            <div class="author-note">
+                <div class="author-note-header">
+                    <span class="note-icon">💬</span>
+                    <span class="note-title">作者说</span>
+                </div>
+                <div class="author-note-content">
+                    {{ chapter.author_note|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="reading-footer">
+        <div class="chapter-navigation">
+            {% if prev_chapter %}
+                <a href="{{ url_for('read_chapter', novel_id=novel.id, chapter_number=prev_chapter.chapter_number) }}" class="nav-btn nav-prev">
+                    <span class="nav-arrow">←</span>
+                    <div class="nav-info">
+                        <span class="nav-label">上一章</span>
+                        <span class="nav-title">{{ prev_chapter.title }}</span>
+                    </div>
+                </a>
+            {% else %}
+                <div class="nav-btn nav-prev disabled">
+                    <span class="nav-arrow">←</span>
+                    <div class="nav-info">
+                        <span class="nav-label">上一章</span>
+                        <span class="nav-title">已经是第一章</span>
+                    </div>
+                </div>
+            {% endif %}
+
+            <a href="{{ url_for('novel_detail', novel_id=novel.id) }}" class="nav-btn nav-catalog">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">目录</span>
+            </a>
+
+            {% if next_chapter %}
+                <a href="{{ url_for('read_chapter', novel_id=novel.id, chapter_number=next_chapter.chapter_number) }}" class="nav-btn nav-next">
+                    <div class="nav-info">
+                        <span class="nav-label">下一章</span>
+                        <span class="nav-title">{{ next_chapter.title }}</span>
+                    </div>
+                    <span class="nav-arrow">→</span>
+                </a>
+            {% else %}
+                <div class="nav-btn nav-next disabled">
+                    <div class="nav-info">
+                        <span class="nav-label">下一章</span>
+                        <span class="nav-title">最新章节</span>
+                    </div>
+                    <span class="nav-arrow">→</span>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="chapter-list-sidebar">
+            <div class="sidebar-header">
+                <h3>章节列表</h3>
+            </div>
+            <div class="chapter-list-scroll">
+                {% for chap in chapters %}
+                    <a href="{{ url_for('read_chapter', novel_id=novel.id, chapter_number=chap.chapter_number) }}"
+                       class="chapter-sidebar-item {% if chap.chapter_number == chapter.chapter_number %}active{% endif %}">
+                        <span class="sidebar-chapter-number">第{{ chap.chapter_number }}章</span>
+                        <span class="sidebar-chapter-title">{{ chap.title }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.reading-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.reading-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.reading-nav {
+    margin-bottom: 1rem;
+}
+
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #333;
+}
+
+.nav-icon {
+    margin-right: 0.5rem;
+}
+
+.reading-title-section {
+    text-align: center;
+}
+
+.novel-title-reading {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-family: 'Noto Serif SC', serif;
+}
+
+.chapter-title-reading {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 1rem;
+    font-family: 'Noto Serif SC', serif;
+}
+
+.reading-meta {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    font-size: 0.9rem;
+    color: #999;
+}
+
+.reading-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+    color: #333;
+    font-family: 'Noto Serif SC', serif;
+}
+
+.chapter-content {
+    margin-bottom: 3rem;
+    text-indent: 2em;
+}
+
+.chapter-content br {
+    margin-bottom: 1em;
+    display: block;
+    content: "";
+}
+
+.author-note {
+    background: rgba(248, 249, 250, 0.8);
+    border-left: 4px solid #e9ecef;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.author-note-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.note-icon {
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.note-title {
+    font-weight: 600;
+    color: #495057;
+}
+
+.author-note-content {
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+.reading-footer {
+    margin-top: 3rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 2rem;
+}
+
+.chapter-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #495057;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.nav-btn:hover:not(.disabled) {
+    border-color: #007bff;
+    color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+}
+
+.nav-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nav-prev {
+    text-align: left;
+}
+
+.nav-next {
+    text-align: right;
+}
+
+.nav-catalog {
+    flex-direction: column;
+    text-align: center;
+    min-width: 80px;
+}
+
+.nav-arrow {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.nav-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.nav-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chapter-list-sidebar {
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.sidebar-header {
+    margin-bottom: 1rem;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    color: #495057;
+    font-size: 1.1rem;
+}
+
+.chapter-list-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.chapter-sidebar-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #495057;
+    transition: all 0.3s ease;
+    margin-bottom: 0.25rem;
+}
+
+.chapter-sidebar-item:hover {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.chapter-sidebar-item.active {
+    background: #007bff;
+    color: white;
+}
+
+.sidebar-chapter-number {
+    font-size: 0.8rem;
+    color: inherit;
+    margin-right: 1rem;
+    min-width: 60px;
+}
+
+.sidebar-chapter-title {
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .reading-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+
+    .reading-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .chapter-navigation {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .nav-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .nav-prev, .nav-next {
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

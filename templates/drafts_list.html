@@ -1,0 +1,814 @@
+{% extends "base.html" %}
+
+{% block title %}草稿列表 - {{ novel.title }} - 王的小说站{% endblock %}
+
+{% block content %}
+<div class="notion-container">
+    <!-- 侧边栏 -->
+    <div class="notion-sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <span class="logo-icon">📚</span>
+                <span class="logo-text">草稿管理</span>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <h3 class="section-title">导航</h3>
+                <a href="{{ url_for('author_dashboard') }}" class="sidebar-link">
+                    <span class="link-icon">🏠</span>
+                    <span class="link-text">作家后台</span>
+                </a>
+                <a href="{{ url_for('novel_detail', novel_id=novel.id) }}" class="sidebar-link">
+                    <span class="link-icon">📖</span>
+                    <span class="link-text">小说详情</span>
+                </a>
+                <a href="{{ url_for('user_settings') }}" class="sidebar-link">
+                    <span class="link-icon">⚙️</span>
+                    <span class="link-text">设置</span>
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="section-title">当前作品</h3>
+                <div class="novel-info-sidebar">
+                    <div class="novel-title-sidebar">{{ novel.title }}</div>
+                    <div class="novel-stats">
+                        <span class="stat">章节: {{ novel.chapters|length }}</span>
+                        <span class="stat">草稿: {{ drafts|length }}</span>
+                        <span class="stat">状态: {% if novel.status == 'ongoing' %}连载中{% else %}已完结{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="section-title">快速操作</h3>
+                <a href="{{ url_for('create_draft', novel_id=novel.id) }}" class="sidebar-link create-link">
+                    <span class="link-icon">➕</span>
+                    <span class="link-text">新建草稿</span>
+                </a>
+                <a href="{{ url_for('create_chapter', novel_id=novel.id) }}" class="sidebar-link">
+                    <span class="link-icon">📝</span>
+                    <span class="link-text">直接发布章节</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="notion-main">
+        <!-- 顶部工具栏 -->
+        <div class="notion-toolbar">
+            <div class="toolbar-left">
+                <div class="breadcrumb">
+                    <a href="{{ url_for('author_dashboard') }}" class="breadcrumb-link">作家后台</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <a href="{{ url_for('novel_detail', novel_id=novel.id) }}" class="breadcrumb-link">{{ novel.title }}</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">草稿列表</span>
+                </div>
+            </div>
+
+            <div class="toolbar-right">
+                <div class="toolbar-actions">
+                    <div class="search-box">
+                        <input type="text" placeholder="搜索草稿..." class="search-input">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    <a href="{{ url_for('create_draft', novel_id=novel.id) }}" class="primary-action-btn">
+                        <span class="action-icon">➕</span>
+                        <span class="action-text">新建草稿</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="notion-content">
+            <div class="content-header">
+                <div class="header-left">
+                    <h1 class="page-title">草稿列表</h1>
+                    <p class="page-subtitle">管理《{{ novel.title }}》的所有草稿</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ drafts|length }}</div>
+                        <div class="stat-label">总草稿数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ drafts|selectattr('is_published')|list|length }}</div>
+                        <div class="stat-label">已发布</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ drafts|rejectattr('is_published')|list|length }}</div>
+                        <div class="stat-label">草稿中</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if drafts %}
+            <div class="drafts-grid">
+                {% for draft in drafts %}
+                <div class="draft-card {% if draft.is_published %}published{% else %}draft{% endif %}">
+                    <div class="card-header">
+                        <div class="card-type">
+                            {% if draft.is_published %}
+                            <span class="type-badge published">已发布</span>
+                            {% else %}
+                            <span class="type-badge draft">草稿</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-actions">
+                            <div class="action-menu">
+                                <button class="menu-toggle">⋯</button>
+                                <div class="menu-dropdown">
+                                    <a href="{{ url_for('edit_draft', draft_id=draft.id) }}" class="menu-item">
+                                        <span class="menu-icon">✏️</span>
+                                        编辑
+                                    </a>
+                                    {% if not draft.is_published %}
+                                    <form action="{{ url_for('publish_draft', draft_id=draft.id) }}" method="POST" class="menu-item-form">
+                                        <button type="submit" class="menu-item" onclick="return confirm('确定要发布这个草稿吗？')">
+                                            <span class="menu-icon">🚀</span>
+                                            发布
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <form action="{{ url_for('delete_draft', draft_id=draft.id) }}" method="POST" class="menu-item-form">
+                                        <button type="submit" class="menu-item delete-item" onclick="return confirm('确定要删除这个草稿吗？')">
+                                            <span class="menu-icon">🗑️</span>
+                                            删除
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-content">
+                        <h3 class="draft-title">{{ draft.title }}</h3>
+                        <div class="draft-preview">
+                            {{ draft.content[:150] }}{% if draft.content|length > 150 %}...{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="footer-left">
+                            <div class="meta-item">
+                                <span class="meta-icon">🕒</span>
+                                <span class="meta-text">{{ draft.updated_at.strftime('%m/%d %H:%M') }}</span>
+                            </div>
+                            {% if draft.is_published and draft.chapter_number %}
+                            <div class="meta-item">
+                                <span class="meta-icon">#</span>
+                                <span class="meta-text">第{{ draft.chapter_number }}章</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="footer-right">
+                            <span class="word-count">{{ draft.content|length }} 字</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3></h3>还没有草稿</h3>
+                <p>开始</p>创作您的第一个草稿吧！</p>
+                <a href="{{ url_for('create_draft', novel_id=novel.id) }}" class="empty-action-btn">
+                    <span class="btn-icon">➕</span>
+                    新建草稿
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.notion-container {
+    display: flex;
+    min-height: 100vh;
+    background: #f7f6f3;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* 侧边栏样式 */
+.notion-sidebar {
+    width: 280px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-icon {
+    font-size: 1.5rem;
+}
+
+.logo-text {
+    font-weight: 600;
+    color: #37352f;
+    font-size: 1.1rem;
+}
+
+.sidebar-content {
+    padding: 1rem 0;
+}
+
+.sidebar-section {
+    margin-bottom: 2rem;
+    padding: 0 1.5rem;
+}
+
+.section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #787774;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    color: #37352f;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    margin-bottom: 0.25rem;
+}
+
+.sidebar-link:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.create-link {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    font-weight: 500;
+}
+
+.create-link:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.link-icon {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.link-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.novel-info-sidebar {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.novel-title-sidebar {
+    font-weight: 600;
+    color: #37352f;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.novel-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat {
+    font-size: 0.8rem;
+    color: #787774;
+}
+
+/* 主内容区样式 */
+.notion-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.notion-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.breadcrumb-link {
+    color: #787774;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    color: #37352f;
+}
+
+.breadcrumb-separator {
+    color: #ddd;
+}
+
+.breadcrumb-current {
+    color: #37352f;
+    font-weight: 500;
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input {
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    width: 200px;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.search-icon {
+    position: absolute;
+    right: 0.75rem;
+    color: #787774;
+    font-size: 0.9rem;
+}
+
+.primary-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.primary-action-btn:hover {
+    background: #2563eb;
+    color: white;
+}
+
+.action-icon {
+    font-size: 1rem;
+}
+
+/* 内容区域样式 */
+.notion-content {
+    flex: 1;
+    padding: 2rem;
+    background: white;
+    overflow-y: auto;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #37352f;
+    margin: 0 0 0.5rem 0;
+}
+
+.page-subtitle {
+    color: #787774;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.header-stats {
+    display: flex;
+    gap: 1rem;
+}
+
+.stat-card {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    text-align: center;
+    min-width: 100px;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #37352f;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #787774;
+}
+
+/* 草稿网格样式 */
+.drafts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.draft-card {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.draft-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.draft-card.draft::before {
+    background: #f59e0b;
+}
+
+.draft-card.published::before {
+    background: #10b981;
+}
+
+.draft-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.type-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.type-badge.draft {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.type-badge.published {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.action-menu {
+    position: relative;
+}
+
+.menu-toggle {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #787774;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.menu-toggle:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem;
+    min-width: 140px;
+    z-index: 10;
+    display: none;
+}
+
+.action-menu:hover .menu-dropdown {
+    display: block;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    color: #37352f;
+    text-decoration: none;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.menu-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.menu-item-form {
+    width: 100%;
+}
+
+.delete-item {
+    color: #dc2626;
+}
+
+.delete-item:hover {
+    background: rgba(220, 38, 38, 0.1);
+}
+
+.menu-icon {
+    font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
+}
+
+.card-content {
+    margin-bottom: 1.5rem;
+}
+
+.draft-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #37352f;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+}
+
+.draft-preview {
+    color: #787774;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    max-height: 4.5em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.footer-left {
+    display: flex;
+    gap: 1rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: #787774;
+}
+
+.meta-icon {
+    font-size: 0.9rem;
+}
+
+.word-count {
+    font-size: 0.8rem;
+    color: #787774;
+    font-weight: 500;
+}
+
+/* 空状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 12px;
+    border: 2px dashed rgba(0, 0, 0, 0.1);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: #37352f;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.empty-state p {
+    color: #787774;
+    margin: 0 0 2rem 0;
+    font-size: 1rem;
+}
+
+.empty-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+
+.empty-action-btn:hover {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .notion-container {
+        flex-direction: column;
+    }
+
+    .notion-sidebar {
+        width: 100%;
+        height: auto;
+    }
+
+    .content-header {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .header-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .stat-card {
+        flex: 1;
+        min-width: auto;
+    }
+
+    .drafts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .notion-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .toolbar-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .search-input {
+        width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .notion-content {
+        padding: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+    }
+
+    .header-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .stat-card {
+        text-align: left;
+        padding: 0.75rem 1rem;
+    }
+
+    .footer-left {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 搜索功能
+    const searchInput = document.querySelector('.search-input');
+    const draftCards = document.querySelectorAll('.draft-card');
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        draftCards.forEach(card => {
+            const title = card.querySelector('.draft-title').textContent.toLowerCase();
+            const content = card.querySelector('.draft-preview').textContent.toLowerCase();
+
+            if (title.includes(searchTerm) || content.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    // 点击外部关闭菜单
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.action-menu')) {
+            document.querySelectorAll('.menu-dropdown').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,851 @@
+{% extends "base.html" %}
+
+{% block title %}编辑草稿 - {{ draft.title }} - 王的小说站{% endblock %}
+
+{% block content %}
+<div class="notion-editor">
+    <!-- 侧边栏 -->
+    <div class="notion-sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <span class="logo-icon">📝</span>
+                <span class="logo-text">草稿笔记</span>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <h3 class="section-title">导航</h3>
+                <a href="{{ url_for('novel_drafts', novel_id=novel.id) }}" class="sidebar-link">
+                    <span class="link-icon">📚</span>
+                    <span class="link-text">草稿列表</span>
+                </a>
+                <a href="{{ url_for('author_dashboard') }}" class="sidebar-link">
+                    <span class="link-icon">🏠</span>
+                    <span class="link-text">作家后台</span>
+                </a>
+                <a href="{{ url_for('user_settings') }}" class="sidebar-link">
+                    <span class="link-icon">⚙️</span>
+                    <span class="link-text">设置</span>
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="section-title">当前作品</h3>
+                <div class="novel-info-sidebar">
+                    <div class="novel-title-sidebar">{{ novel.title }}</div>
+                    <div class="novel-stats">
+                        <span class="stat">章节: {{ novel.chapters|length }}</span>
+                        <span class="stat">状态: {% if novel.status == 'ongoing' %}连载中{% else %}已完结{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="notion-main">
+        <!-- 顶部工具栏 -->
+        <div class="notion-toolbar">
+            <div class="toolbar-left">
+                <div class="breadcrumb">
+                    <a href="{{ url_for('novel_drafts', novel_id=novel.id) }}" class="breadcrumb-link">草稿列表</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">{{ draft.title }}</span>
+                </div>
+            </div>
+
+            <div class="toolbar-right">
+                <div class="toolbar-actions">
+                    <button id="save-status" class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">已保存</span>
+                    </button>
+
+                    <div class="action-group">
+                        <button id="ai-assist-btn" class="toolbar-action-btn">
+                            <span class="action-icon">🤖</span>
+                            <span class="action-text">AI助手</span>
+                        </button>
+
+                        {% if not draft.is_published %}
+                        <form action="{{ url_for('publish_draft', draft_id=draft.id) }}" method="POST" class="inline-form">
+                            <button type="submit" class="toolbar-action-btn publish-btn" onclick="return confirm('确定要发布这个草稿吗？')">
+                                <span class="action-icon">🚀</span>
+                                <span class="action-text">发布章节</span>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑器内容 -->
+        <div class="notion-content">
+            <div class="editor-container">
+                <!-- 标题区域 -->
+                <div class="title-section">
+                    <div class="title-icon">📄</div>
+                    <input
+                        type="text"
+                        id="draft-title"
+                        class="notion-title-input"
+                        placeholder="无标题草稿..."
+                        value="{{ draft.title }}"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <!-- 工具栏 -->
+                <div class="formatting-toolbar">
+                    <div class="toolbar-group">
+                        <button type="button" data-command="bold" class="format-btn" title="粗体 (Ctrl+B)">
+                            <span class="format-icon">B</span>
+                        </button>
+                        <button type="button" data-command="italic" class="format-btn" title="斜体 (Ctrl+I)">
+                            <span class="format-icon"><em></em>I</em></span>
+                        </button>
+                        <button type="button" data-command="underline" class="format-btn" title="下划线 (Ctrl+U)">
+                            <span class="format-icon">U</span>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-group">
+                        <button type="button" data-command="insertUnorderedList" class="format-btn" title="无序列表">
+                            <span class="format-icon">•</span>
+                        </button>
+                        <button type="button" data-command="insertOrderedList" class="format-btn" title="有序列表">
+                            <span class="format-icon">1.</span>
+                        </button>
+                    </div>
+
+                    <div class="toolbar-group">
+                        <button type="button" id="ai-suggest-btn" class="format-btn ai-btn" title="AI建议">
+                            <span class="format-icon">✨</span>
+                            <span class="format-text">AI建议</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 编辑器 -->
+                <div
+                    id="draft-content"
+                    class="notion-editor-content"
+                    contenteditable="true"
+                    data-draft-id="{{ draft.id }}"
+                    placeholder="开始写作... (支持 Markdown 格式)"
+                >{{ draft.content | safe }}</div>
+
+                <!-- 底部状态栏 -->
+                <div class="editor-statusbar">
+                    <div class="status-info">
+                        <span class="status-item">字数: <span id="word-count">0</span></span>
+                        <span class="status-item">最后保存: <span id="last-saved">{{ draft.updated_at.strftime('%H:%M') }}</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI助手模态框 -->
+<div id="ai-modal" class="notion-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <div class="modal-title">
+                <span class="modal-icon">🤖</span>
+                <h3></h3>AI写作助手</h3>
+            </div>
+            <button type="button" class="close-modal">
+                <span class="close-icon">×</span>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="ai-input-section">
+                <div class="input-group">
+                    <label for="ai-prompt" class="input-label">你的请求</label>
+                    <textarea
+                        id="ai-prompt"
+                        class="ai-textarea"
+                        placeholder="例如：润色这段文字、续写故事、生成角色对话等..."
+                        rows="3"
+                    ></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="ai-context" class="input-label">上下文（可选）</label>
+                    <textarea
+                        id="ai-context"
+                        class="ai-textarea"
+                        placeholder="提供相关背景信息，帮助AI更好地理解..."
+                        rows="2"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="ai-actions">
+                <button id="ai-generate" class="ai-generate-btn">
+                    <span class="generate-icon">⚡</span>
+                    <span class="generate-text">生成</span>
+                </button>
+                <button id="ai-cancel" class="ai-cancel-btn">取消</button>
+            </div>
+
+            <div id="ai-result" class="ai-result-section">
+                <div class="result-header">
+                    <h4 class="result-title">AI回复</h4>
+                    <div class="result-actions">
+                        <button id="ai-insert" class="result-action-btn">
+                            <span class="action-icon">📝</span>
+                            插入到编辑器
+                        </button>
+                        <button id="ai-copy" class="result-action-btn">
+                            <span class="action-icon">📋</span>
+                            复制
+                        </button>
+                    </div>
+                </div>
+                <div class="ai-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/draft_editor.js') }}"></script>
+
+<style>
+.notion-editor {
+    display: flex;
+    height: 100vh;
+    background: #f7f6f3;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* 侧边栏样式 */
+.notion-sidebar {
+    width: 280px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-icon {
+    font-size: 1.5rem;
+}
+
+.logo-text {
+    font-weight: 600;
+    color: #37352f;
+    font-size: 1.1rem;
+}
+
+.sidebar-content {
+    flex: 1;
+    padding: 1rem 0;
+}
+
+.sidebar-section {
+    margin-bottom: 2rem;
+    padding: 0 1.5rem;
+}
+
+.section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #787774;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    color: #37352f;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    margin-bottom: 0.25rem;
+}
+
+.sidebar-link:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.link-icon {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.link-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.novel-info-sidebar {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.novel-title-sidebar {
+    font-weight: 600;
+    color: #37352f;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.novel-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat {
+    font-size: 0.8rem;
+    color: #787774;
+}
+
+/* 主内容区样式 */
+.notion-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.notion-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.breadcrumb-link {
+    color: #787774;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    color: #37352f;
+}
+
+.breadcrumb-separator {
+    color: #ddd;
+}
+
+.breadcrumb-current {
+    color: #37352f;
+    font-weight: 500;
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #787774;
+    cursor: default;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.action-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.toolbar-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #37352f;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toolbar-action-btn:hover {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.publish-btn {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+.publish-btn:hover {
+    background: #0da271;
+    border-color: #0da271;
+}
+
+/* 编辑器内容样式 */
+.notion-content {
+    flex: 1;
+    padding: 2rem;
+    background: white;
+    overflow-y: auto;
+}
+
+.editor-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.title-icon {
+    font-size: 2rem;
+    color: #787774;
+}
+
+.notion-title-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #37352f;
+    background: transparent;
+    font-family: inherit;
+}
+
+.notion-title-input::placeholder {
+    color: #b8b6b1;
+}
+
+.formatting-toolbar {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    margin-bottom: 2rem;
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 0.25rem;
+    padding-right: 1rem;
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.toolbar-group:last-child {
+    border-right: none;
+}
+
+.format-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #787774;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.format-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #37352f;
+}
+
+.ai-btn {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.ai-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.format-icon {
+    font-weight: 600;
+}
+
+.format-text {
+    font-size: 0.8rem;
+}
+
+.notion-editor-content {
+    min-height: 500px;
+    outline: none;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #37352f;
+    font-family: 'Noto Serif SC', serif;
+}
+
+.notion-editor-content:empty:before {
+    content: attr(placeholder);
+    color: #b8b6b1;
+    pointer-events: none;
+}
+
+.notion-editor-content p {
+    margin-bottom: 1.5rem;
+    text-indent: 2em;
+}
+
+.notion-editor-content h1,
+.notion-editor-content h2,
+.notion-editor-content h3 {
+    margin: 2rem 0 1rem 0;
+    color: #37352f;
+    font-weight: 600;
+}
+
+.notion-editor-content ul,
+.notion-editor-content ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.notion-editor-content li {
+    margin-bottom: 0.5rem;
+}
+
+.editor-statusbar {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.status-info {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.85rem;
+    color: #787774;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* 模态框样式 */
+.notion-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+}
+
+.modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+.modal-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 600px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-icon {
+    font-size: 1.5rem;
+}
+
+.modal-title h3 {
+    margin: 0;
+    color: #37352f;
+    font-size: 1.25rem;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #787774;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.close-modal:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.ai-input-section {
+    margin-bottom: 2rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #37352f;
+    font-size: 0.9rem;
+}
+
+.ai-textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.2s ease;
+}
+
+.ai-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.ai-actions {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.ai-generate-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.ai-generate-btn:hover {
+    background: #2563eb;
+}
+
+.ai-cancel-btn {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    color: #787774;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ai-cancel-btn:hover {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.ai-result-section {
+    display: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding-top: 2rem;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.result-title {
+    margin: 0;
+    color: #37352f;
+    font-size: 1.1rem;
+}
+
+.result-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.result-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #787774;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.result-action-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.ai-content {
+    background: #fafafa;
+    padding: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    line-height: 1.6;
+    color: #37352f;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .notion-editor {
+        flex-direction: column;
+    }
+
+    .notion-sidebar {
+        width: 100%;
+        height: auto;
+    }
+
+    .notion-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .toolbar-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .notion-content {
+        padding: 1rem;
+    }
+
+    .notion-title-input {
+        font-size: 2rem;
+    }
+
+    .formatting-toolbar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .toolbar-group {
+        border-right: none;
+        padding-right: 0;
+    }
+
+    .modal-container {
+        width: 95%;
+        margin: 1rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+{% endblock %}

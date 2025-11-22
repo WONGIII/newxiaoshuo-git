@@ -1,0 +1,112 @@
+{% extends "base.html" %} {% block title %}编辑小说 - {{ novel.title }} -
+优雅小说{% endblock %} {% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1 class="form-title">编辑小说</h1>
+            <p class="form-subtitle">修改《{{ novel.title }}》的信息</p>
+        </div>
+
+        <form method="POST" class="form">
+            <div class="form-group">
+                <label for="title" class="form-label">小说标题</label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    class="form-input"
+                    required
+                    value="{{ novel.title }}"
+                    maxlength="200"
+                    placeholder="一个好的标题能吸引更多读者"
+                />
+                <p class="form-hint">一个好的标题能吸引更多读者</p>
+            </div>
+
+            <div class="form-group">
+                <label for="cover_image" class="form-label">封面图片URL</label>
+                <input
+                    type="url"
+                    id="cover_image"
+                    name="cover_image"
+                    class="form-input"
+                    value="{{ novel.cover_image or '' }}"
+                    placeholder="https://example.com/image.jpg"
+                />
+                <p class="form-hint">
+                    推荐分辨率：300x400像素，支持JPG、PNG格式
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="description" class="form-label">作品简介</label>
+                <textarea
+                    id="description"
+                    name="description"
+                    class="form-input"
+                    placeholder="请简要介绍您的作品，包括故事背景、主要角色等..."
+                    rows="6"
+                    maxlength="1000"
+                >{{ novel.description or '' }}</textarea>
+                <p class="form-hint">
+                    简洁明了的简介能帮助读者快速了解您的作品
+                </p>
+                <p class="form-hint">
+                    {{ (novel.description or '')|length }}/1000
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="status" class="form-label">作品状态</label>
+                <select id="status" name="status" class="form-input">
+                    <option value="ongoing" {% if novel.status == "ongoing" %}selected{% endif %}>
+                        连载中
+                    </option>
+                    <option value="completed" {% if novel.status == "completed" %}selected{% endif %}>
+                        已完结
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <a
+                    href="{{ url_for('author_dashboard') }}"
+                    class="btn btn-secondary"
+                >
+                    取消
+                </a>
+                <button type="submit" class="btn btn-primary">保存修改</button>
+
+                {% if session.role in ['admin', 'super_admin'] or novel.author_id == session.user_id %}
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    onclick="confirmDelete()"
+                >
+                    删除作品
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function confirmDelete() {
+        if (confirm("确定要删除这个作品吗？此操作不可恢复！")) {
+            fetch('{{ url_for("delete_novel", novel_id=novel.id) }}', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+            }).then((response) => {
+                if (response.ok) {
+                    window.location.href = '{{ url_for("author_dashboard") }}';
+                } else {
+                    alert("删除失败");
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

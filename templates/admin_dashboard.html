@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+
+{% block title %}管理后台 - 优雅小说{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1 class="admin-title">管理后台</h1>
+        <p class="admin-subtitle">系统管理和用户权限设置</p>
+    </div>
+
+    <div class="admin-tabs">
+        <button class="tab-btn active" data-tab="users">用户管理</button>
+        <button class="tab-btn" data-tab="novels">作品管理</button>
+        <button class="tab-btn" data-tab="stats">系统统计</button>
+    </div>
+
+    <div class="tab-content">
+        <!-- 用户管理 -->
+        <div class="tab-pane active" id="users">
+            <div class="section-header">
+                <h2>用户管理</h2>
+                <p>管理用户账户和权限设置</p>
+            </div>
+
+            {% if users %}
+                <div class="admin-table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>用户ID</th>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>角色</th>
+                                <th>注册时间</th>
+                                <th>作品数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <span class="role-badge role-{{ user.role }}">
+                                            {% if user.role == 'super_admin' %}超级管理员
+                                            {% elif user.role == 'admin' %}管理员
+                                            {% else %}普通用户{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ user.novels|length }}</td>
+                                    <td>
+                                        {% if session.role == 'super_admin' and user.id != session.user_id %}
+                                            <form method="POST" action="{{ url_for('change_user_role', user_id=user.id) }}" class="role-form">
+                                                <select name="role" class="role-select" onchange="this.form.submit()">
+                                                    <option value="reader" {% if user.role == 'reader' %}selected{% endif %}>普通用户</option>
+                                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>管理员</option>
+                                                    <option value="super_admin" {% if user.role == 'super_admin' %}selected{% endif %}>超级管理员</option>
+                                                </select>
+                                            </form>
+                                        {% else %}
+                                            <span class="text-muted">不可操作</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <h3></h3>暂无用户</h3>
+                    <p></p>系统还没有注册用户</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 作品管理 -->
+        <div class="tab-pane" id="novels">
+            <div class="section-header">
+                <h2></h2>作品管理</h2>
+                <p></p>管理系统中的所有作品</p>
+            </div>
+
+            {% if novels %}
+                <div class="admin-table-container">
+                    <table class="admin-table">
+                        <thead></thead>
+                            <tr></tr>
+                                <th></th>作品ID</th>
+                                <th></th>标题</th>
+                                <th></th>作者</th>
+                                <th></th>状态</th>
+                                <th></th>章节数</th>
+                                <th></th>评论数</th>
+                                <th></th>创建时间</th>
+                                <th></th>最后更新</th>
+                                <th></th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                            {% for novel in novels %}
+                                <tr></tr>
+                                    <td>{{ novel.id }}</td>
+                                    <td></td>
+                                        <a href="{{ url_for('novel_detail', novel_id=novel.id) }}" class="novel-link">
+                                            {{ novel.title }}
+                                        </a>
+                                    </td>
+                                    <td>{{ novel.author.username }}</td>
+                                    <td></td>
+                                        <span class="status-badge status-{{ novel.status }}">
+                                            {% if novel.status == 'ongoing' %}连载中{% else %}已完结{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ novel.chapters|length }}</td>
+                                    <td>{{ novel.comments|length }}</td>
+                                    <td>{{ novel.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ novel.updated_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('novel_detail', novel_id=novel.id) }}" class="btn btn-sm btn-outline-dark">查看</a>
+                                        <a href="{{ url_for('edit_novel', novel_id=novel.id) }}" class="btn btn-sm btn-secondary">编辑</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📚</div>
+                    <h3>暂无作品</h3>
+                    <p>系统还没有发布任何作品</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 系统统计 -->
+        <div class="tab-pane" id="stats">
+            <div class="section-header">
+                <h2>系统统计</h2>
+                <p>网站整体数据概览</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ users|length }}</span>
+                        <span class="stat-label">总用户数</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ novels|length }}</span>
+                        <span class="stat-label">总作品数</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ total_chapters }}</span>
+                        <span class="stat-label">总章节数</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-content">
+                        <span class="stat-number">{{ total_comments }}</span>
+                        <span class="stat-label">总评论数</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-details">
+                <div class="detail-card">
+                    <h3>用户角色分布</h3>
+                    <div class="role-stats">
+                        <div class="role-stat">
+                            <span class="role-name">普通用户</span>
+                            <span class="role-count">{{ reader_count }}</span>
+                        </div>
+                        <div class="role-stat">
+                            <span class="role-name">管理员</span>
+                            <span class="role-count">{{ admin_count }}</span>
+                        </div>
+                        <div class="role-stat">
+                            <span class="role-name">超级管理员</span>
+                            <span class="role-count">{{ super_admin_count }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-card">
+                    <h3>作品状态分布</h3>
+                    <div class="status-stats">
+                        <div class="status-stat">
+                            <span class="status-name">连载中</span>
+                            <span class="status-count">{{ ongoing_novels }}</span>
+                        </div>
+                        <div class="status-stat">
+                            <span class="status-name">已完结</span>
+                            <span class="status-count">{{ completed_novels }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.admin-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.admin-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-family: 'Noto Serif SC', serif;
+}
+
+.admin-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.tab-btn {
+    padding: 1rem 2rem;
+    border: none;
+    background: none;
+    color: #666;
+    font-size: 1rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    color: #007bff;
+}
+
+.tab-btn.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+.section-header {
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.section-header p {
+    color: #666;
+}
+
+.admin-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.admin-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.admin-table tr:hover {
+    background: #f8f9fa;
+}
+
+.role-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.role-super_admin {
+    background: #dc3545;
+    color: white;
+}
+
+.role-admin {
+    background: #007bff;
+    color: white;
+}
+
+.role-reader {
+    background: #6c757d;
+    color: white;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-ongoing {
+    background: #28a745;
+    color: white;
+}
+
+.status-completed {
+    background: #6c757d;
+    color: white;
+}
+
+.role-select {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.novel-link {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.novel-link:hover {
+    text-decoration: underline;
+}
+
+.text-muted {
+    color: #6c757d;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.stats-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.detail-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.detail-card h3 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.role-stats,
+.status-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.role-stat,
+.status-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.role-name,
+.status-name {
+    font-weight: 500;
+    color: #495057;
+}
+
+.role-count,
+.status-count {
+    font-weight: 600;
+    color: #007bff;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 1rem;
+    }
+
+    .admin-tabs {
+        flex-direction: column;
+    }
+
+    .tab-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .admin-table-container {
+        overflow-x: auto;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-details {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+
+            // 移除所有激活状态
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabPanes.forEach(p => p.classList.remove('active'));
+
+            // 添加当前激活状态
+            this.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}
